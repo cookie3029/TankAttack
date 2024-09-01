@@ -3,6 +3,12 @@ using UnityEngine;
 public class Cannon : MonoBehaviour
 {
     [SerializeField] private float force = 1200.0f;
+    [SerializeField] private GameObject expEffect;
+
+    void Awake()
+    {
+        expEffect = Resources.Load<GameObject>("BigExplosion");
+    }
 
     void Start()
     {
@@ -12,6 +18,8 @@ public class Cannon : MonoBehaviour
 
     private void OnCollisionEnter(Collision coll)
     {
+        var obj = Instantiate(expEffect, transform.position, Quaternion.identity);
+        Destroy(obj, 5.0f);
         Destroy(this.gameObject);
     }
 }

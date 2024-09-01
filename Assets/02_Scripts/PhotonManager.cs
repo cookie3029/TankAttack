@@ -48,12 +48,12 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         // 룸 옵션
         RoomOptions ro = new RoomOptions
         {
-            MaxPlayers = 20,
+            MaxPlayers = 100,
             IsOpen = true,
             IsVisible = true
         };
 
-        PhotonNetwork.CreateRoom("MyRoom", ro);
+        PhotonNetwork.CreateRoom("MyRoom" + Random.Range(0, 100), ro);
     }
 
     // 방 생성 완료 콜백
@@ -67,8 +67,11 @@ public class PhotonManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("방 입장 완료");
 
-        // 네트워크 플레이어를 생성
-
+        if (PhotonNetwork.IsMasterClient)
+        {
+            // 전투 씬을 로딩
+            PhotonNetwork.LoadLevel("BattleField");
+        }
     }
 
 }

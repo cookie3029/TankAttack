@@ -1,17 +1,22 @@
+using Photon.Pun;
 using Unity.Mathematics;
 using UnityEngine;
 
 public class TurretController : MonoBehaviour
 {
+    private PhotonView pv;
+
     [SerializeField] private float turnSpeed = 20.0f;
 
     void Start()
     {
-
+        pv = transform.root.GetComponent<PhotonView>();
     }
 
     void Update()
     {
+        if (!pv.IsMine) return;
+
         // 메인 카메라에서 Mouse Position 위치로 발사하는 Ray 생성
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         Debug.DrawRay(ray.origin, ray.direction * 100.0f, Color.green);
