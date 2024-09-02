@@ -8,12 +8,28 @@ using Photon.Realtime;
 
 public class GameManager : MonoBehaviourPunCallbacks
 {
+    public static GameManager Instanace = null;
+
     [SerializeField] private Button exitButton;
     [SerializeField] private TMP_Text conntectInfo;
+    [SerializeField] private TMP_Text msgText;
+
+    [SerializeField] private Button sendMsgButton;
+    [SerializeField] private TMP_InputField chatMsgIf;
+
+    private PhotonView pv;
+
+    void Awake()
+    {
+        Instanace = this;
+    }
 
     IEnumerator Start()
     {
         exitButton.onClick.AddListener(() => OnExitButtonClick());
+        sendMsgButton.onClick.AddListener(() => SendChatMessage());
+
+        pv = GetComponent<PhotonView>();
 
         yield return new WaitForSeconds(0.5f);
         CreateTank();
@@ -26,6 +42,21 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         // 네트워크 플레이어를 생성
         PhotonNetwork.Instantiate("Tank", pos, Quaternion.identity, 0);
+    }
+
+    public void SendChatMessage()
+    {
+        // [Zackiller] 안녕하세요.
+        string msg = $"<color=#00ff00>[{PhotonNetwork.NickName}]</color> {chatMsgIf.text}";
+
+        DisplayMessage(msg);
+        pv.RPC(nameof(DisplayMessage), RpcTarget.OthersBuffered, msg);
+    }
+
+    [PunRPC]
+    public void DisplayMessage(string msg)
+    {
+        msgText.text += msg + "\n";
     }
 
     #region 사용자 정의 콜백

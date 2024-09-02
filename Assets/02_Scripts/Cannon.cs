@@ -5,6 +5,9 @@ public class Cannon : MonoBehaviour
     [SerializeField] private float force = 1200.0f;
     [SerializeField] private GameObject expEffect;
 
+    // 발사한 유저의 식별 ID
+    public int shooterID;
+
     void Awake()
     {
         expEffect = Resources.Load<GameObject>("BigExplosion");

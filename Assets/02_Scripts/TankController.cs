@@ -3,6 +3,8 @@ using Unity.Cinemachine;
 using Photon.Pun;
 using TMPro;
 using System;
+using Photon.Realtime;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(AudioSource))]
 public class TankController : MonoBehaviour
@@ -28,6 +30,13 @@ public class TankController : MonoBehaviour
     [NonSerialized]
     public TMP_Text nickName;
 
+    private float initHp = 100.0f;
+    private float currHp = 100.0f;
+
+    private MeshRenderer[] renderers;
+
+    public Image hpBar;
+
     void Awake()
     {
         cvc = GameObject.Find("CinemachineCamera").GetComponent<CinemachineCamera>();
@@ -40,6 +49,8 @@ public class TankController : MonoBehaviour
         nickName = transform.Find("Canvas/Panel/NickName").GetComponent<TMP_Text>();
 
         nickName.text = pv.Owner.NickName;
+
+        renderers = GetComponentsInChildren<MeshRenderer>();
 
         // 카메라 연결
         if (pv.IsMine == true)
@@ -62,7 +73,7 @@ public class TankController : MonoBehaviour
         if (isFire)
         {
             // RPC 함수 호출
-            pv.RPC(nameof(Fire), RpcTarget.AllViaServer);
+            pv.RPC(nameof(Fire), RpcTarget.AllViaServer, pv.OwnerActorNr);
         }
     }
 
@@ -74,9 +85,54 @@ public class TankController : MonoBehaviour
 
     // RPC 정의
     [PunRPC]
-    void Fire()
+    void Fire(int actorNumber)
     {
         audio.PlayOneShot(fireSfx, 0.8f);
-        Instantiate(cannonPrefab, firePos.position, firePos.rotation);
+
+        var cannon = Instantiate(cannonPrefab, firePos.position, firePos.rotation);
+
+        cannon.GetComponent<Cannon>().shooterID = actorNumber;
+    }
+
+    void OnCollisionEnter(Collision coll)
+    {
+        if (coll.collider.CompareTag("CANNON"))
+        {
+            // ActorNumber => NickName
+            int actorNumber = coll.gameObject.GetComponent<Cannon>().shooterID;
+
+            Player player = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
+
+            currHp -= 20.0f;
+
+            // HpBar 설정
+            hpBar.fillAmount = currHp / initHp;
+
+            if (currHp <= 0)
+            {
+                string msg = $"<color=#00ff00>{pv.Owner.NickName}</color>님은 사망했습니다. 막타는 <color=#ff0000>{player.NickName}</color>!";
+                GameManager.Instanace.DisplayMessage(msg);
+
+                SetVisibleTank(false);
+                Invoke(nameof(RespawnTank), 3.0f);
+            }
+        }
+    }
+
+    void RespawnTank()
+    {
+        currHp = initHp;
+        hpBar.fillAmount = 1.0f;
+        SetVisibleTank(true);
+    }
+
+    void SetVisibleTank(bool IsVisible)
+    {
+        foreach (var renderer in renderers)
+        {
+            renderer.enabled = IsVisible;
+        }
+
+        tr.Find("Canvas").gameObject.SetActive(IsVisible);
     }
 }
