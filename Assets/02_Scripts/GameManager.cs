@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviourPunCallbacks
     [SerializeField] private Button exitButton;
     [SerializeField] private TMP_Text conntectInfo;
     [SerializeField] private TMP_Text msgText;
+    [SerializeField] private TMP_Text playerListText;
 
     [SerializeField] private Button sendMsgButton;
     [SerializeField] private TMP_InputField chatMsgIf;
@@ -34,6 +35,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(0.5f);
         CreateTank();
         DisplayConnectInfo();
+        DisplayPlayerListInfo();
     }
 
     void CreateTank()
@@ -78,7 +80,16 @@ public class GameManager : MonoBehaviourPunCallbacks
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
         DisplayConnectInfo();
+        DisplayPlayerListInfo();
     }
+
+    // 룸에 클라리언트가 나갔을 때
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        DisplayConnectInfo();
+        DisplayPlayerListInfo();
+    }
+    #endregion
 
     private void DisplayConnectInfo()
     {
@@ -90,11 +101,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         conntectInfo.text = msg;
     }
 
-    // 룸에 클라리언트가 나갔을 때
-    public override void OnPlayerLeftRoom(Player otherPlayer)
+    private void DisplayPlayerListInfo()
     {
-        DisplayConnectInfo();
-    }
+        string playerList = "";
 
-    #endregion
+        foreach (var player in PhotonNetwork.PlayerList)
+        {
+            string _color = player.IsMasterClient ? "#ff0000" : "#00ff00";
+            playerList += $"<color={_color}>{player.NickName}</color>\n";
+        }
+
+        playerListText.text = playerList;
+    }
 }

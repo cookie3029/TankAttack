@@ -3,6 +3,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class PhotonManager : MonoBehaviourPunCallbacks
 {
@@ -12,9 +13,21 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
     [Header("UI")]
     [SerializeField] private TMP_InputField nickNameIf;
+    [SerializeField] private TMP_InputField roomNameIf;
 
     [Header("Button")]
     [SerializeField] private Button loginButton;
+    [SerializeField] private Button makeRoomButton;
+
+    [Header("RoomList")]
+    // 룸 프리팹
+    public GameObject roomPrefab;
+
+    // 룸 프리팹을 생성할 부모 객체
+    public Transform contentTr;
+
+    // 품 목록을 저장하기 위한 딕셔너리
+    private Dictionary<string, GameObject> roomDict = new Dictionary<string, GameObject>();
 
 
     void Awake()
@@ -43,6 +56,29 @@ public class PhotonManager : MonoBehaviourPunCallbacks
 
         SetNickName();
         loginButton.onClick.AddListener(() => OnLoginButtonClick());
+        makeRoomButton.onClick.AddListener(() => OnMakeRoomButtonClick());
+    }
+
+    private void OnMakeRoomButtonClick()
+    {
+        // 닉네임 여부 확인
+        SetNickName();
+
+        // 룸 이름 입력 여부 확인
+        if (string.IsNullOrEmpty(roomNameIf.text))
+        {
+            roomNameIf.text = $"Room_{Random.Range(0, 1000)}:0000";
+        }
+
+        // 룸 속성 정의
+        RoomOptions ro = new RoomOptions();
+
+        ro.MaxPlayers = 20;
+        ro.IsOpen = true;
+        ro.IsVisible = true;
+
+        // 룸 생성
+        PhotonNetwork.CreateRoom(roomNameIf.text, ro);
     }
 
     private void SetNickName()
@@ -123,4 +159,48 @@ public class PhotonManager : MonoBehaviourPunCallbacks
         }
     }
 
+    public override void OnRoomListUpdate(List<RoomInfo> roomList)
+    {
+        foreach (var room in roomList)
+        {
+            Debug.Log($"{room.Name} {room.PlayerCount}/{room.MaxPlayers}");
+
+            // 삭제된 룸
+            if (room.RemovedFromList)
+            {
+                // 품 삭제
+                if (roomDict.TryGetValue(room.Name, out GameObject tempRoom))
+                {
+                    // room 프리팹 클론을 삭제
+                    Destroy(tempRoom);
+
+                    // 딕셔너리의 레코드를 삭제
+                    roomDict.Remove(room.Name);
+                }
+
+                continue;
+            }
+
+            // 새로 생성된 룸, 변경된 경우
+            if (roomDict.ContainsKey(room.Name) == false)
+            {
+                // 처음 생성된 룸
+                var _room = Instantiate(roomPrefab, contentTr);
+
+                // RoomPrefab에 RoomInfo 값을 저장
+                _room.GetComponent<RoomData>().RoomInfo = room;
+
+                roomDict.Add(room.Name, _room);
+            }
+            else
+            {
+                // 이전에 생성되었던 룸
+                // 룸 정보 갱신
+                if (roomDict.TryGetValue(room.Name, out GameObject tempRoom))
+                {
+                    tempRoom.GetComponent<RoomData>().RoomInfo = room;
+                }
+            }
+        }
+    }
 }

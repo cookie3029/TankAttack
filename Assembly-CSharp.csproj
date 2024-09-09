@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Assets\03_Prefabs\ParticlePack\EffectExamples\Misc Effects\Scripts\SpawnEffect.cs" />
     <Compile Include="Assets\02_Scripts\Billboard.cs" />
+    <Compile Include="Assets\02_Scripts\RoomData.cs" />
     <Compile Include="Assets\Photon\PhotonRealtime\Demos\DemoLoadBalancing\ConnectAndJoinRandomLb.cs" />
     <Compile Include="Assets\02_Scripts\TurretController.cs" />
     <Compile Include="Assets\03_Prefabs\ParticlePack\Shared\Scripts\SimpleCameraController.cs" />
